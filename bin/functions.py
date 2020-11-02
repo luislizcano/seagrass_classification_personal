@@ -2,7 +2,10 @@
 """
 Created on Sat Oct 17 18:42:48 2020
 
-@author: lizca
+@author: Luis Lizcano-Sandoval
+University of South Florida
+luislizcanos@usf.edu
+
 """
 
 import ee
@@ -40,38 +43,132 @@ def rescaleThr(img, exp, thresholds):
 ## For BOA Sentinel-2 images, processed with the Py6S model 
 ## Adapted according to Chastain et al. 2019 (https://doi.org/10.1016/j.rse.2018.11.012).
 ## Compute a cloud score:
-def CloudScore6S(img, cloudThresh):
-    
+def CloudScore6S(sat, img, cloudThresh):
+        
     cloudThresh = int(cloudThresh)
-    ## A helper to apply an expression and linearly rescale the output.
  
-    ## Compute several indicators of cloudyness and take the minimum of them.
-    score = ee.Image(1.0)
-   
-    ## Clouds are reasonably bright in the blue band.
-    ## (BLUE−0.1) / (0.5−0.1)
-    score = score.min(rescale(img, 'img.B2', [0.01, 0.5])) #[0.01,0.5]-for ocean
- 
-    ## Aerosols.
-    ## (AEROSOL−0.1) / (0.3−0.1)
-    score = score.min(rescale(img, 'img.B1', [0.01, 0.5])) #[0.01,0.5]-for ocean
-   
-    ## Clouds are reasonably bright in all visible bands.
-    ## (BLUE+GREEN+RED−0.2) / (0.8−0.2)
-    score = score.min(rescale(img, 'img.B4 + img.B3 + img.B2', [0.02, 0.8]))
+    if 'Sentinel' in sat:
+        ## Compute several indicators of cloudyness and take the minimum of them.
+        score = ee.Image(1.0)
 
-    ## (((NIR−SWIR1)/(NIR+SWIR1))+0.1) / (0.1+0.1)
-    ##var ir = img.normalizedDifference(['B11', 'B12']);
-    score =  score.min(rescaleThr(img, 'img.B8 + img.B11 + img.B12', [0.01, 0.1])) #.multiply(100).byte();
+        ## Clouds are reasonably bright in the blue band.
+        ## (BLUE−0.1) / (0.5−0.1)
+        score = score.min(rescale(img, 'img.B2', [0.01, 0.5])) #[0.01,0.5]-for ocean
 
-    ## However, clouds are not snow.
-    ## (((GREEN−SWIR1)/(GREEN+SWIR1))−0.8) / (0.6−0.8)
-    ndsi = img.normalizedDifference(['B3', 'B11'])
-    score =  score.min(rescale(ndsi, 'img', [0.8, 0.6])).multiply(100).byte();
-    ##Map.addLayer(score,{'min':0,'max':100});
-    score = score.lt(cloudThresh).rename('cloudMask')
-    img = img.updateMask(img.mask().And(score))
-    return ee.Image(img).addBands(score)
+        ## Aerosols.
+        ## (AEROSOL−0.1) / (0.3−0.1)
+        score = score.min(rescale(img, 'img.B1', [0.01, 0.5])) #[0.01,0.5]-for ocean
+
+        ## Clouds are reasonably bright in all visible bands.
+        ## (BLUE+GREEN+RED−0.2) / (0.8−0.2)
+        score = score.min(rescale(img, 'img.B4 + img.B3 + img.B2', [0.02, 0.8]))
+
+        ## (((NIR−SWIR1)/(NIR+SWIR1))+0.1) / (0.1+0.1)
+        score =  score.min(rescaleThr(img, 'img.B8 + img.B11 + img.B12', [0.01, 0.8])) #.multiply(100).byte();
+
+        ## However, clouds are not snow.
+        ## (((GREEN−SWIR1)/(GREEN+SWIR1))−0.8) / (0.6−0.8)
+        ndsi = img.normalizedDifference(['B3', 'B11'])
+        score =  score.min(rescale(ndsi, 'img', [0.8, 0.6])).multiply(100).byte();
+        ##Map.addLayer(score,{'min':0,'max':100});
+        
+        ## Apply threshold
+        score = score.lt(cloudThresh).rename('cloudMask')
+        img = img.updateMask(img.mask().And(score))
+        return ee.Image(img).addBands(score)
+    
+    elif 'Landsat8' in sat:
+        ## Compute several indicators of cloudyness and take the minimum of them.
+        score = ee.Image(1.0)
+
+        ## Clouds are reasonably bright in the blue band.
+        ## (BLUE−0.1) / (0.5−0.1)
+        score = score.min(rescale(img, 'img.B2', [0.01, 0.3])) #[0.01,0.5]-for ocean
+
+        ## Aerosols.
+        ## (AEROSOL−0.1) / (0.3−0.1)
+        score = score.min(rescale(img, 'img.B1', [0.01, 0.3])) #[0.01,0.5]-for ocean
+
+        ## Clouds are reasonably bright in all visible bands.
+        ## (BLUE+GREEN+RED−0.2) / (0.8−0.2)
+        score = score.min(rescale(img, 'img.B4 + img.B3 + img.B2', [0.01, 0.8]))
+
+        ## (((NIR−SWIR1)/(NIR+SWIR1))+0.1) / (0.1+0.1)
+        score =  score.min(rescale(img, 'img.B5 + img.B6 + img.B7', [0.01, 0.8])) #.multiply(100).byte();
+
+        ## Clouds are reasonably cool in temperature.
+        score = score.min(rescale(img,'img.B10', [296, 280]));
+        
+        ## However, clouds are not snow.
+        ## (((GREEN−SWIR1)/(GREEN+SWIR1))−0.8) / (0.6−0.8)
+        ndsi = img.normalizedDifference(['B3', 'B6'])
+        score =  score.min(rescale(ndsi, 'img', [0.8, 0.6])).multiply(100).byte();
+        ##Map.addLayer(score,{'min':0,'max':100});
+        
+        ## Apply threshold
+        score = score.lt(cloudThresh).rename('cloudMask')
+        img = img.updateMask(img.mask().And(score))
+        return ee.Image(img).addBands(score)
+        
+    elif 'Landsat7' in sat:
+        ## Compute several indicators of cloudyness and take the minimum of them.
+        score = ee.Image(1.0)
+
+        ## Clouds are reasonably bright in the blue band.
+        ## (BLUE−0.1) / (0.5−0.1)
+        score = score.min(rescale(img, 'img.B1', [0.01, 0.3])) #[0.01,0.5]-for ocean
+
+        ## Clouds are reasonably bright in all visible bands.
+        ## (BLUE+GREEN+RED−0.2) / (0.8−0.2)
+        score = score.min(rescale(img, 'img.B3 + img.B2 + img.B1', [0.01, 0.8]))
+
+        ## (((NIR−SWIR1)/(NIR+SWIR1))+0.1) / (0.1+0.1)
+        score =  score.min(rescale(img, 'img.B4 + img.B5 + img.B7', [0.01, 0.8])) #.multiply(100).byte();
+
+        ## Clouds are reasonably cool in temperature.
+        score = score.min(rescale(img,'img.B6_VCID_1', [296, 280]));
+        
+        ## However, clouds are not snow.
+        ## (((GREEN−SWIR1)/(GREEN+SWIR1))−0.8) / (0.6−0.8)
+        ndsi = img.normalizedDifference(['B3', 'B5'])
+        score =  score.min(rescale(ndsi, 'img', [0.8, 0.6])).multiply(100).byte();
+        ##Map.addLayer(score,{'min':0,'max':100});
+        
+        ## Apply threshold
+        score = score.lt(cloudThresh).rename('cloudMask')
+        img = img.updateMask(img.mask().And(score))
+        return ee.Image(img).addBands(score)
+    
+    elif 'Landsat5' in sat:
+        ## Compute several indicators of cloudyness and take the minimum of them.
+        score = ee.Image(1.0)
+
+        ## Clouds are reasonably bright in the blue band.
+        ## (BLUE−0.1) / (0.5−0.1)
+        score = score.min(rescale(img, 'img.B1', [0.01, 0.3])) #[0.01,0.5]-for ocean
+
+        ## Clouds are reasonably bright in all visible bands.
+        ## (BLUE+GREEN+RED−0.2) / (0.8−0.2)
+        score = score.min(rescale(img, 'img.B3 + img.B2 + img.B1', [0.01, 0.8]))
+
+        ## (((NIR−SWIR1)/(NIR+SWIR1))+0.1) / (0.1+0.1)
+        score =  score.min(rescale(img, 'img.B4 + img.B5 + img.B7', [0.01, 0.8])) #.multiply(100).byte();
+
+        ## Clouds are reasonably cool in temperature.
+        score = score.min(rescale(img,'img.B6', [296, 280]));
+        
+        ## However, clouds are not snow.
+        ## (((GREEN−SWIR1)/(GREEN+SWIR1))−0.8) / (0.6−0.8)
+        ndsi = img.normalizedDifference(['B3', 'B5'])
+        score =  score.min(rescale(ndsi, 'img', [0.8, 0.6])).multiply(100).byte();
+        ##Map.addLayer(score,{'min':0,'max':100});
+        
+        ## Apply threshold
+        score = score.lt(cloudThresh).rename('cloudMask')
+        img = img.updateMask(img.mask().And(score))
+        return ee.Image(img).addBands(score)
+        
+        
 ###############################################################################
 
 # =============================================================================
@@ -85,6 +182,7 @@ def landMaskFunction(image,geometry):
     mask = ee.Image.constant(1).clip(geometry).mask().Not()
     return image.updateMask(mask)
 ###############################################################################
+
 
 # =============================================================================
 #  KD CORRECTIONS
@@ -141,16 +239,17 @@ def kdCorrection(image, bathymetry):
 # Output:
 # ee.Image with three bands B1B2, B1B3, B2B3
 # =============================================================================
-def div(image, bands, sand):
+def div(image, scale, sand):
     
     ## Select the bands for the DIV
+    bands = ['B1','B2','B3']
     image_div = ee.Image(image).select(bands)
     
     ## Calculate standard deviation
     imgSTD = image_div.reduceRegion(**{
       'reducer': ee.Reducer.stdDev(),
       'geometry': sand,
-      'scale': 10, #For Sentinel-2
+      'scale': scale,
       'maxPixels': 3e9}).toArray()
     
     ## Calculate variance
@@ -160,7 +259,7 @@ def div(image, bands, sand):
     imgMEAN = image_div.reduceRegion(**{
       'reducer': ee.Reducer.mean(),
       'geometry': sand,
-      'scale': 10,
+      'scale': scale,
       'maxPixels': 3e9}).toArray()
     
     ## Calculate coefficient of variation
@@ -171,7 +270,7 @@ def div(image, bands, sand):
     imgCOV = image_div.toArray().reduceRegion(**{
       'reducer': ee.Reducer.covariance(),
       'geometry': sand,
-      'scale': 10})
+      'scale': scale})
     imgCOV = ee.Array(imgCOV.get('array'))
     imgCOVB12 =  ee.Number(imgCOV.get([0,1]))
     imgCOVB13 =  ee.Number(imgCOV.get([0,2]))
@@ -204,5 +303,70 @@ def div(image, bands, sand):
     
     return ee.Image(DIV)
 
+###############################################################################
+
+# =============================================================================
+#  Sun-Glint Correction
+#
+# Usage:
+# image = image with bands B1-B5
+# bands = select 3 bands, e.g.: ['B1','B2','B3']
+# glint = feature collection with polygons representing glinted areas of specific images
+#
+# Output:
+# ee.Image with three bands B1, B2, B3, B4
+# =============================================================================
+##Function to correct for Sunglint
+## Input: an water surface reflectance image
+## Output: the image after Sunglint correction
+
+def deglint(image):
+    ## Fit a linear model between NIR and other bands, in the sunglint polygons
+    ## Output: a dictionary such that: linear_fit.keys() =  ["coefficients","residuals"]
+    linearFit1 = image.select(['B5', 'B1']).reduceRegion(**{
+        'reducer': ee.Reducer.linearFit(),
+        'geometry': sunglint,
+        'scale': 30,
+        'maxPixels': 1e12
+        })
+  
+    linearFit2 = image.select(['B5', 'B2']).reduceRegion(**{
+        'reducer': ee.Reducer.linearFit(),
+        'geometry': sunglint,
+        'scale': 30,
+        'maxPixels': 1e12
+        })
+  
+    linearFit3 = image.select(['B5', 'B3']).reduceRegion(**{
+        'reducer': ee.Reducer.linearFit(),
+        'geometry': sunglint,
+        'scale': 30,
+        'maxPixels': 1e12
+        })
+  
+    linearFit4 = image.select(['B5', 'B4']).reduceRegion(**{
+        'reducer': ee.Reducer.linearFit(),
+        'geometry': sunglint,
+        'scale': 30,
+        'maxPixels': 1e12
+        })
+
+  
+    ## Extract the slope of the fit, convert it into a constant image
+    slopeImage = ee.Dictionary(**{'B1': linearFit1.get('scale'), 
+                                  'B2': linearFit2.get('scale'), 
+                                  'B3': linearFit2.get('scale'),
+                                  'B4': linearFit3.get('scale')}).toImage()
+  
+    ## Calculate the minimum of NIR in the image, in the sunglint polygons
+    minNIR = image.select('B5').reduceRegion(**{
+        'reducer': ee.Reducer.min(),
+        'geometry': sunglint,
+        'scale': 30,
+        'maxPixels': 1e12
+        }).toImage(['B5']);
+  
+    ## Apply the expression  
+    return image.select(['B1','B2', 'B3','B4']).subtract(slopeImage.multiply((image.select('B5')).subtract(minNIR)))
 
 
