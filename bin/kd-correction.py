@@ -9,6 +9,10 @@ import ee
 ee.Initialize()
 # =============================================================================
 #  KD CORRECTIONS
+#
+# Usage:
+# image = image to correct (with at least bands B1-B4 for Sentinel-2)
+# bathymetry = bathymetry raster file
 # =============================================================================
 
 ## Assuming clear water, we can extract the effect of light attenuation on bands
