@@ -49,22 +49,23 @@ def CloudScore6S(sat, img, cloudThresh):
  
     if 'Sentinel' in sat:
         ## Compute several indicators of cloudyness and take the minimum of them.
+        ## Bands required: [B1,B2,B3,B4,B8,B11,B12]
         score = ee.Image(1.0)
 
         ## Clouds are reasonably bright in the blue band.
         ## (BLUE−0.1) / (0.5−0.1)
-        score = score.min(rescale(img, 'img.B2', [0.01, 0.5])) #[0.01,0.5]-for ocean
+        score = score.min(rescale(img, 'img.B2', [0.01, 0.3])) #[0.01,0.5]-for ocean
 
         ## Aerosols.
         ## (AEROSOL−0.1) / (0.3−0.1)
-        score = score.min(rescale(img, 'img.B1', [0.01, 0.5])) #[0.01,0.5]-for ocean
+        score = score.min(rescale(img, 'img.B1', [0.01, 0.3])) #[0.01,0.5]-for ocean
 
         ## Clouds are reasonably bright in all visible bands.
         ## (BLUE+GREEN+RED−0.2) / (0.8−0.2)
-        score = score.min(rescale(img, 'img.B4 + img.B3 + img.B2', [0.02, 0.8]))
+        score = score.min(rescale(img, 'img.B4 + img.B3 + img.B2', [0.01, 0.8]))
 
         ## (((NIR−SWIR1)/(NIR+SWIR1))+0.1) / (0.1+0.1)
-        score =  score.min(rescaleThr(img, 'img.B8 + img.B11 + img.B12', [0.01, 0.8])) #.multiply(100).byte();
+        score =  score.min(rescale(img, 'img.B8 + img.B11 + img.B12', [0.01, 0.8])) #.multiply(100).byte();
 
         ## However, clouds are not snow.
         ## (((GREEN−SWIR1)/(GREEN+SWIR1))−0.8) / (0.6−0.8)
@@ -79,6 +80,7 @@ def CloudScore6S(sat, img, cloudThresh):
     
     elif 'Landsat8' in sat:
         ## Compute several indicators of cloudyness and take the minimum of them.
+        ## Bands required: [B1,B2,B3,B4,B5,B6,B7,B10]
         score = ee.Image(1.0)
 
         ## Clouds are reasonably bright in the blue band.
@@ -112,6 +114,7 @@ def CloudScore6S(sat, img, cloudThresh):
         
     elif 'Landsat7' in sat:
         ## Compute several indicators of cloudyness and take the minimum of them.
+        ## Bands required: [B1,B2,B3,B4,B5,B6_VCID_1,B7]
         score = ee.Image(1.0)
 
         ## Clouds are reasonably bright in the blue band.
@@ -141,6 +144,7 @@ def CloudScore6S(sat, img, cloudThresh):
     
     elif 'Landsat5' in sat:
         ## Compute several indicators of cloudyness and take the minimum of them.
+        ## Bands required: [B1,B2,B3,B4,B5,B6,B7]
         score = ee.Image(1.0)
 
         ## Clouds are reasonably bright in the blue band.
@@ -185,61 +189,17 @@ def landMaskFunction(image,geometry):
 
 
 # =============================================================================
-#  KD CORRECTIONS
-#
-# Usage:
-# image = image to correct (with at least bands B1-B4 for Sentinel-2)
-# bathymetry = bathymetry raster file
-# =============================================================================
-
-## Assuming clear water, we can extract the effect of light attenuation on bands
-## 1 to 4 (Sentinel-2). It will correct the reflectance values only for water (AOP),
-## ignoring the effect of chlorophyll and particles (IOP).
-## Kd values based on spectral absorption and backscattering coefficients of pure seawater
-## by Smith and Baker (1981). Values are interpolated to match Sentinel-2 Bands.
-## The calculations follow the Beer's law equation.
-
-
-def kdCorrection(image, bathymetry):
-    kdB1 = ee.Number(-0.0169)  #445nm
-    kdB2 = ee.Number(-0.02415) #495nm
-    kdB3 = ee.Number(-0.0717)  #560nm
-    kdB4 = ee.Number(-0.415)   #665nm
-    
-    ## Convert depth values to positive.
-    BathyArray = bathymetry.abs()#.convolve(kernel)
-    #BathyArray = etopo_clip
-    bandB1 = image.select('B1')
-    bandB2 = image.select('B2')
-    bandB3 = image.select('B3')
-    bandB4 = image.select('B4')
-    expB1 = (BathyArray.multiply(kdB1)).exp()
-    expB2 = (BathyArray.multiply(kdB2)).exp()
-    expB3 = (BathyArray.multiply(kdB3)).exp()
-    expB4 = (BathyArray.multiply(kdB4)).exp()
-    EdB1 = bandB1.multiply(expB1);
-    EdB2 = bandB2.multiply(expB2);
-    EdB3 = bandB3.multiply(expB3);
-    EdB4 = bandB4.multiply(expB4);
-    
-    ## Image after correcting the light attenuation effect
-    imageKd = EdB1.addBands(EdB2).addBands(EdB3).addBands(EdB4)
-    
-    return ee.Image(imageKd)
-###############################################################################
-
-# =============================================================================
 #  Depth-Invariant Index
 #
 # Usage:
-# image = image to apply DIV (with at least 3 bands B1-B4 for Sentinel-2)
+# image = image to apply DII (with at least 3 bands B1-B4 for Sentinel-2)
 # bands = select 3 bands, e.g.: ['B1','B2','B3']
 # sand = feature collection with polygons representing sand areas at different depths
 #
 # Output:
 # ee.Image with three bands B1B2, B1B3, B2B3
 # =============================================================================
-def div(image, scale, sand):
+def DIV(image, scale, sand):
     
     ## Select the bands for the DIV
     bands = ['B1','B2','B3']
@@ -299,74 +259,12 @@ def div(image, scale, sand):
     DI_image = DI_image.addBands(DII_1_2.select(['B1'],['B1B2']))
     DI_image = DI_image.addBands(DII_1_3.select(['B1'],['B1B3']))
     DI_image = DI_image.addBands(DII_2_3.select(['B2'],['B2B3']))
-    DIV = DI_image.select('B1B2','B1B3','B2B3')
+    DII = DI_image.select('B1B2','B1B3','B2B3')
     
-    return ee.Image(DIV)
+    return ee.Image(DII)
 
 ###############################################################################
 
-# =============================================================================
-#  Sun-Glint Correction
-#
-# Usage:
-# image = image with bands B1-B5
-# bands = select 3 bands, e.g.: ['B1','B2','B3']
-# glint = feature collection with polygons representing glinted areas of specific images
-#
-# Output:
-# ee.Image with three bands B1, B2, B3, B4
-# =============================================================================
-##Function to correct for Sunglint
-## Input: an water surface reflectance image
-## Output: the image after Sunglint correction
 
-def deglint(image):
-    ## Fit a linear model between NIR and other bands, in the sunglint polygons
-    ## Output: a dictionary such that: linear_fit.keys() =  ["coefficients","residuals"]
-    linearFit1 = image.select(['B5', 'B1']).reduceRegion(**{
-        'reducer': ee.Reducer.linearFit(),
-        'geometry': sunglint,
-        'scale': 30,
-        'maxPixels': 1e12
-        })
-  
-    linearFit2 = image.select(['B5', 'B2']).reduceRegion(**{
-        'reducer': ee.Reducer.linearFit(),
-        'geometry': sunglint,
-        'scale': 30,
-        'maxPixels': 1e12
-        })
-  
-    linearFit3 = image.select(['B5', 'B3']).reduceRegion(**{
-        'reducer': ee.Reducer.linearFit(),
-        'geometry': sunglint,
-        'scale': 30,
-        'maxPixels': 1e12
-        })
-  
-    linearFit4 = image.select(['B5', 'B4']).reduceRegion(**{
-        'reducer': ee.Reducer.linearFit(),
-        'geometry': sunglint,
-        'scale': 30,
-        'maxPixels': 1e12
-        })
-
-  
-    ## Extract the slope of the fit, convert it into a constant image
-    slopeImage = ee.Dictionary(**{'B1': linearFit1.get('scale'), 
-                                  'B2': linearFit2.get('scale'), 
-                                  'B3': linearFit2.get('scale'),
-                                  'B4': linearFit3.get('scale')}).toImage()
-  
-    ## Calculate the minimum of NIR in the image, in the sunglint polygons
-    minNIR = image.select('B5').reduceRegion(**{
-        'reducer': ee.Reducer.min(),
-        'geometry': sunglint,
-        'scale': 30,
-        'maxPixels': 1e12
-        }).toImage(['B5']);
-  
-    ## Apply the expression  
-    return image.select(['B1','B2', 'B3','B4']).subtract(slopeImage.multiply((image.select('B5')).subtract(minNIR)))
 
 
