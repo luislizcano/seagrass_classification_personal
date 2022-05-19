@@ -1,6 +1,5 @@
 def start_processing():
     
-    %%time
     print('Initiating...')
 
     ## Initiate loop:
