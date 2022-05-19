@@ -1,4 +1,5 @@
-def start_processing():
+def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dataFolder,smoothStr,nameCode,regionCountry,state,
+                         imageList,sand_areas,groundPoints,land,regions):
     
     print('Initiating...')
 
