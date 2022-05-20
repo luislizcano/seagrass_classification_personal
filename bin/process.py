@@ -34,28 +34,17 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
                 imageTarget = ee.Image("users/lizcanosandoval/BOA/Sentinel/"+boaFolder+'/'+imageID)
             elif 'Landsat' in satellite:
                 imageTarget = ee.Image("users/lizcanosandoval/BOA/Landsat/"+boaFolder+'/'+imageID)
-
-        ## If the image source is an EE collection, then define the satellite collection:
-        if 'ee'== imageSource:
-            ## Load BOA image collection from assets:
-            if 'Sentinel' in satellite:
-                image = ee.Image("COPERNICUS/S2_SR/"+imageID)
-            elif 'Landsat8' == satellite:
-                image = ee.Image("LANDSAT/LC08/C01/T1_SR/"+imageID)
-            elif 'Landsat7' == satellite:
-                image = ee.Image("LANDSAT/LE07/C01/T1_SR/"+imageID)
-            elif 'Landsat5' == satellite:
-                image = ee.Image("LANDSAT/LT05/C01/T1_SR/"+imageID)
-
-        ## Get image metadata:
-        if 'assets'== imageSource:
+            ## Get image metadata:
             imageSat = imageTarget.get('satellite').getInfo() #Image satellite
             imageTile = imageTarget.get('tile_id').getInfo() #Image tile id
             imageDate = imageTarget.get('date').getInfo() #Image date
             imageGeometry = imageTarget.geometry() #Tile geometry.
 
+        ## If the image source is an EE collection, then define the satellite collection:
         if 'ee'== imageSource:
+            ## Load BOA image collection from EE cloud:
             if 'Sentinel' in satellite:
+                image = ee.Image("COPERNICUS/S2_SR/"+imageID)
                 imageTarget = image.divide(10000).set(image.toDictionary(image.propertyNames()))
                 imageSat = imageTarget.get('SPACECRAFT_NAME').getInfo() #Image satellite
                 imageTile = imageTarget.get('MGRS_TILE').getInfo() #Image tile id
@@ -63,8 +52,22 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
                 imageDate = str(datetime.datetime.utcfromtimestamp(ee_date/1000.0)) #Image date
                 imageGeometry = imageTarget.geometry() #Tile geometry.
             elif 'Landsat8' == satellite:
+                image = ee.Image("LANDSAT/LC08/C01/T1_SR/"+imageID)
                 imageTarget = image.divide(10000).set(image.toDictionary(image.propertyNames()))
-                #imageSat = imageTarget.get('SATELLITE').getInfo() #Image satellite
+                imageSat = satellite
+                imageTile = str(imageTarget.get('WRS_PATH').getInfo())+str(imageTarget.get('WRS_ROW').getInfo()) #Image tile id
+                imageDate = imageTarget.get('SENSING_TIME').getInfo()
+                imageGeometry = imageTarget.geometry() #Tile geometry.
+            elif 'Landsat7' == satellite:
+                image = ee.Image("LANDSAT/LE07/C01/T1_SR/"+imageID)
+                imageTarget = image.divide(10000).set(image.toDictionary(image.propertyNames()))
+                imageSat = satellite
+                imageTile = str(imageTarget.get('WRS_PATH').getInfo())+str(imageTarget.get('WRS_ROW').getInfo()) #Image tile id
+                imageDate = imageTarget.get('SENSING_TIME').getInfo()
+                imageGeometry = imageTarget.geometry() #Tile geometry.
+            elif 'Landsat5' == satellite:
+                image = ee.Image("LANDSAT/LT05/C01/T1_SR/"+imageID)
+                imageTarget = image.divide(10000).set(image.toDictionary(image.propertyNames()))
                 imageSat = satellite
                 imageTile = str(imageTarget.get('WRS_PATH').getInfo())+str(imageTarget.get('WRS_ROW').getInfo()) #Image tile id
                 imageDate = imageTarget.get('SENSING_TIME').getInfo()
@@ -271,56 +274,46 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
 
 
         ####################    EXPORT CLASSIFIED IMAGES    ######################
-
-        # Set the scale properly
-        scale = []
-        sat = []
+        print('   Exporting classified image to EE Assets...')
+        
         method = ['SVM']
-        classifiedCollection = ee.ImageCollection([classifiedSVM])
-        classifiedList = classifiedCollection.toList(classifiedCollection.size())
-        classifiedSize = classifiedList.size().getInfo()
-        print('   Exporting classified images to EE Assets...')
+        # Rename satellite
+        if 'Sentinel' in imageSat:
+            sat = 'Sentinel'
+        else:
+            sat = 'Landsat'
 
-        for i in range(classifiedSize):
+        ## Select classified image
+        output_image = ee.Image(classifySVM)
 
-            # Rename satellite
-            if 'Sentinel' in imageSat:
-                sat = 'Sentinel'
-            else:
-                sat = 'Landsat'
+        # set some properties for exported image:
+        output = output_image.set({'country': regionCountry,
+                       'state': state,
+                       'location': regionName,
+                       'name_code': nameCode,
+                       'satellite': imageSat,
+                       'tile_id': str(imageTile),
+                       'image_id': imageID,                                               
+                       'date': imageDate,
+                       'year': imageDate[0:4],
+                       'classifier': method[i],
+                       'generator': 'Lizcano-Sandoval'
+                            })
 
-            ## Select image
-            image = ee.Image(classifiedList.get(i))
+        # define YOUR assetID. (This do not create folders, you need to create them manually)
+        assetID = 'users/lizcanosandoval/Seagrass/'+sat+'/'+exportFolder+'/' ##This goes to an ImageCollection folder
+        fileName = imageID+smoothStr+ method[i] +'_'+nameCode
+        path = assetID + fileName
 
-            # set some properties for exported image:
-            output = image.set({'country': regionCountry,
-                           'state': state,
-                           'location': regionName,
-                           'name_code': nameCode,
-                           'satellite': imageSat,
-                           'tile_id': str(imageTile),
-                           'image_id': imageID,                                               
-                           'date': imageDate,
-                           'year': imageDate[0:4],
-                           'classifier': method[i],
-                           'generator': 'Lizcano-Sandoval'
-                                })
-
-            # define YOUR assetID. (This do not create folders, you need to create them manually)
-            assetID = 'users/lizcanosandoval/Seagrass/'+sat+'/'+exportFolder+'/' ##This goes to an ImageCollection folder
-            fileName = imageID+smoothStr+ method[i] +'_'+nameCode
-            path = assetID + fileName
-
-            ## Batch Export to Assets
-            ee.batch.Export.image.toAsset(\
-                image = ee.Image(output),                                                    
-                description = method[i] +smoothStr+ imageID,
-                assetId = path,
-                region = imageGeometry.buffer(10),                                      
-                maxPixels = 1e13,
-                scale = imageScale).start()
-            print('   Classified Image '+str(i+1)+': '+imageID +smoothStr+ method[i]+' submitted...')
-        print('   Classified images submitted!')
+        ## Batch Export to Assets
+        ee.batch.Export.image.toAsset(\
+            image = ee.Image(output),                                                    
+            description = method[i] +smoothStr+ imageID,
+            assetId = path,
+            region = imageGeometry.buffer(10),                                      
+            maxPixels = 1e13,
+            scale = imageScale).start()
+        print('   Classified Image '+str(i)+': '+fileName+' submitted...')
 
 
 
