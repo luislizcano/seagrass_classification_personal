@@ -4,6 +4,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
     import pandas as pd
     import xlsxwriter
     import datetime
+    from functions import CloudScore6S,landMaskFunction,DII
     
     print('Initiating...')
 
