@@ -158,10 +158,6 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
             bandsClass = ['B1','B2', 'B3', 'B1B2']
             bg = ['B1B2']
 
-        ## Add bands of interest to sample training points.
-        ## Use image with no turbidity mask
-        imageClassify = landMask.addBands(imageDII.select(bg)).select(bandsClass)
-
 
         ###########################    APPLY SMOOTHER    #########################
         ## Define a boxcar or low-pass kernel (Used if want to smooth the image)
@@ -180,9 +176,15 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         ## Apply tidal flat & turbidity masks to specific region of interest:
         # seagrass_mask = ee.Image("users/lizcanosandoval/Seagrass/SeagrassMask_FL_100m")
         # imageClassify = imageClassify.updateMask(seagrass_mask) #For raster
-        imageClassify = imageClassify.clip(aoi)
-        imageClassify = tidalMask(imageClassify,nir,green)
-        imageClassify = turbidityMask(imageClassify,aoi,nir,swir,blue,land)
+        ## Use image with no turbidity mask
+        ## Add B/G band and clip:
+        imageClassify = landMask.addBands(imageDII.select(bg)).clip(aoi)
+        ## Create masks
+        mask1 = tidalMask(imageClassify,nir,green)
+        mask2 = turbidityMask(mask1,aoi,nir,swir,blue,land)
+        
+        ## Add bands of interest to sample training points.
+        imageClassify = mask2.addBands(imageDII.select(bg)).select(bandsClass)
 
 
         ################    GET TRAINING AND VALIDATION DATA    ##################
