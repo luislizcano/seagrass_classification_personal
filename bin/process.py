@@ -1,9 +1,10 @@
-def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dataFolder,smoothStr,nameCode,regionCountry,state,imageList,sand_areas,groundPoints,land,regions):
+def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dataFolder,smoothStr,
+                     nameCode,regionCountry,state,imageList,sand_areas,groundPoints,land,regions):
     
     import pandas as pd
     import xlsxwriter
     import datetime
-    from functions import CloudScore6S,landMaskFunction,DII
+    from functions import CloudScore6S,landMaskFunction,tidalMask,turbidityMask,DII
     
     from google.colab import auth
     auth.authenticate_user()
@@ -93,10 +94,37 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
 
         ## Apply land mask
         #landMask = landMaskFunction(cloudMask, land) ## Use if Land is a featureCollection
-        landMask = cloudMask.mask(land.max()) ## Use if Land is an imageCollection
+        landMask = cloudMask.updateMask(land.max()) ## Use if Land is an imageCollection
+
+
+        ###################   MASK TIDAL FLATS & TURBIDITY  ######################
+        ## Set parameter values
+        if 'Sentinel' in imageSat:
+            nir = 'B8'
+            green = 'B3'
+            swir = 'B11'
+            blue = 'B2'
+        elif 'Landsat8' in imageSat:
+            nir = 'B5'
+            green = 'B3'
+            swir = 'B6'
+            blue = 'B2'
+        else:
+            nir = 'B4'
+            green = 'B2'
+            swir = 'B5'
+            blue = 'B1'
+        
+        ## Apply tidal flat mask
+        ndwiMask = tidalMask(landMask,nir,green)
+        
+        ## Apply turbidity mask for the whole image
+        finalMask = turbidityMask(ndwiMask,imageGeometry,nir,swir,blue)
+        finalMask = finalMask.updateMask(land.max())
+        
         print('   Image masked...')
-
-
+        
+        
         ####################    WATER COLUMN CORRECTION    #######################    
 
         ## Filter sand polygons by tile/area:
@@ -104,7 +132,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         sand = ee.FeatureCollection(sand_areas).filterBounds(imageGeometry)
 
         ## Run the Depth-Invariant Index Function
-        imageDII = DII(landMask, imageScale, sand)
+        imageDII = DII(finalMask, imageScale, sand)
 
         print('   Depth-Invariant index applied...')
 
@@ -150,24 +178,6 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         # imageClassify = imageClassify.updateMask(seagrass_mask) #For raster
         aoi = regions.filter(ee.Filter.eq('name',regionName))
         imageClassify = imageClassify.clip(aoi)
-
-
-        #########################   MASK TIDAL FLATS   ###########################
-        ## Mask tidal flats using the NDWI and very low thresholds.
-        ## Set parameter values
-        if 'Sentinel' in imageSat:
-            nir = 'B8'
-            green = 'B3'
-        elif 'Landsat8' in imageSat:
-            nir = 'B5'
-            green = 'B3'
-        else:
-            nir = 'B4'
-            green = 'B2'
-
-        ndwi = landMask.normalizedDifference([nir,green]).rename('ndwi')
-        ndwiMask = ndwi.focalMedian(2).gte(-0.4).Not()
-        imageClassify = imageClassify.updateMask(ndwiMask)
 
 
         ################    GET TRAINING AND VALIDATION DATA    ##################
