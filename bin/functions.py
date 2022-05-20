@@ -219,7 +219,7 @@ def tidalMask(image,nir,green):
 # =============================================================================
 def turbidityMask(image,geometry,nir,swir,blue,land):
     ## Use NIR and SWIR1 bands to generate an index for turbidity
-    ndti = image.normalizedDifference([nir,swir]).rename('NDTI').focalMean(2)
+    ndti = image.normalizedDifference([nir,swir]).rename('NDTI')#.focalMean(2)
 
     ## Get median value in the region of interest and use as threshold.
     stats = ndti.reduceRegion(**{
