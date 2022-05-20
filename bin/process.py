@@ -276,7 +276,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         ####################    EXPORT CLASSIFIED IMAGES    ######################
         print('   Exporting classified image to EE Assets...')
         
-        method = ['SVM']
+        method = 'SVM'
         # Rename satellite
         if 'Sentinel' in imageSat:
             sat = 'Sentinel'
@@ -296,19 +296,19 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
                        'image_id': imageID,                                               
                        'date': imageDate,
                        'year': imageDate[0:4],
-                       'classifier': method[i],
+                       'classifier': method,
                        'generator': 'Lizcano-Sandoval'
                             })
 
         # define YOUR assetID. (This do not create folders, you need to create them manually)
         assetID = 'users/lizcanosandoval/Seagrass/'+sat+'/'+exportFolder+'/' ##This goes to an ImageCollection folder
-        fileName = imageID+smoothStr+ method[i] +'_'+nameCode
+        fileName = imageID+smoothStr+ method +'_'+nameCode
         path = assetID + fileName
 
         ## Batch Export to Assets
         ee.batch.Export.image.toAsset(\
             image = ee.Image(output),                                                    
-            description = method[i] +smoothStr+ imageID,
+            description = method +smoothStr+ imageID,
             assetId = path,
             region = imageGeometry.buffer(10),                                      
             maxPixels = 1e13,
