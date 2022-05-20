@@ -74,6 +74,9 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
             imageScale = 10 # Sentinel resolution
         else:
             imageScale = 30 # Landsat resolution
+        
+        ## Region of interest:
+        aoi = regions.filter(ee.Filter.eq('name',regionName))
 
 
         ###########################    CLOUD MASK    #############################
@@ -145,8 +148,8 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         # 2: Seagrass
         # 3: Sparse seagrass //if available
 
-        ## Filter ground points by tile geometry and display classes
-        filterPoints = ee.FeatureCollection(groundPoints).filterBounds(regions)
+        ## Filter ground points by AOI and display classes
+        filterPoints = ee.FeatureCollection(groundPoints).filterBounds(aoi)
 
         ## Select bands to sample. The B/G band is B2B3 in Sentinel-2 and Landsat-8, and B1B2 for Landsat-7/5
         if 'Sentinel' in imageSat or 'Landsat8' in imageSat:
@@ -175,14 +178,16 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
 
 
         ###################   CLIP TO REGION & APPLY MASKS   #####################
+        ## Apply tidal flat & turbidity masks to specific region of interest:
         # seagrass_mask = ee.Image("users/lizcanosandoval/Seagrass/SeagrassMask_FL_100m")
         # imageClassify = imageClassify.updateMask(seagrass_mask) #For raster
-        
         imageClassify = imageClassify.clip(aoi)
+        imageClassify = tidalMask(imageClassify,nir,green)
+        imageClassify = turbidityMask(imageClassify,aoi,nir,swir,blue)
+        imageClassify = imageClassify.updateMask(land.max())
 
 
         ################    GET TRAINING AND VALIDATION DATA    ##################
-
         ## Sample multi-spectral data using all ground points.
         samplingData = imageClassify.sampleRegions(**{
             'collection': filterPoints,
