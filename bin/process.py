@@ -6,6 +6,8 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
     import datetime
     from functions import CloudScore6S,landMaskFunction,DII
     
+    ee.Initialize()
+    
     print('Initiating...')
 
     ## Initiate loop:
