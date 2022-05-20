@@ -162,19 +162,6 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
             bg = ['B1B2']
 
 
-        ###########################    APPLY SMOOTHER    #########################
-        ## Define a boxcar or low-pass kernel (Used if want to smooth the image)
-        smooth = ee.Kernel.euclidean(**{
-            'radius': 1, 
-            'units': 'pixels', 
-            'normalize': True
-        })
-
-        ## Apply smoother if set:
-        if 'smooth' in smoothStr:
-            imageClassify = imageClassify.convolve(smooth)
-
-
         ###################   CLIP TO REGION & APPLY MASKS   #####################
         ## Apply tidal flat & turbidity masks to specific region of interest:
         # seagrass_mask = ee.Image("users/lizcanosandoval/Seagrass/SeagrassMask_FL_100m")
@@ -190,6 +177,19 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         imageClassify = mask2.addBands(imageDII.select(bg)).select(bandsClass)
 
 
+        ###########################    APPLY SMOOTHER    #########################
+        ## Define a boxcar or low-pass kernel (Used if want to smooth the image)
+        smooth = ee.Kernel.euclidean(**{
+            'radius': 1, 
+            'units': 'pixels', 
+            'normalize': True
+        })
+
+        ## Apply smoother if set:
+        if 'smooth' in smoothStr:
+            imageClassify = imageClassify.convolve(smooth)
+            
+            
         ################    GET TRAINING AND VALIDATION DATA    ##################
         ## Sample multi-spectral data using all ground points.
         samplingData = imageClassify.sampleRegions(**{
