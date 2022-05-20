@@ -313,7 +313,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
             region = imageGeometry.buffer(10),                                      
             maxPixels = 1e13,
             scale = imageScale).start()
-        print('   Classified Image '+str(i)+': '+fileName+' submitted...')
+        print('   Classified Image '+str(i+1)+': '+fileName+' submitted...')
 
 
 
