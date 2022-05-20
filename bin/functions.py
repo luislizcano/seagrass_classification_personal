@@ -185,8 +185,97 @@ def CloudScore6S(sat, img, cloudThresh):
 def landMaskFunction(image,geometry):
     mask = ee.Image.constant(1).clip(geometry).mask().Not()
     return image.updateMask(mask)
+
 ###############################################################################
 
+
+# =============================================================================
+# Function to mask tidal flats.
+
+## Usage:
+# image = image to apply tidal flat mask.
+# nir = str nir band
+# green = str green band
+# =============================================================================
+def tidalMask(image,nir,green):
+    ndwi = image.normalizedDifference([nir,green]).rename('ndwi')
+    ndwiMask = ndwi.focalMedian(2).gte(-0.4).Not()
+    imgMasked = landMask.updateMask(ndwiMask)
+    return imgMasked
+
+###############################################################################
+
+
+# =============================================================================
+# Function to mask turbidity.
+
+## Usage:
+# image = image to apply tidal flat mask.
+# geometry = feature (polygon) of the are of interest.
+# nir = str nir band
+# swir = str swir band
+# blue = str blue band
+# =============================================================================
+def turbidityMask(image,geometry,nir,swir,blue):
+    ## Use NIR and SWIR1 bands to generate an index for turbidity
+    ndti = image.normalizedDifference([nir,swir]).rename('NDTI').focalMean(2)
+
+    ## Get median value in the region of interest and use as threshold.
+    stats = ndti.reduceRegion(**{
+      'reducer': ee.Reducer.median(),
+      'geometry': geometry,
+      'scale':10,
+      'maxPixels': 1e13,
+      'crs': 'EPSG:4326'})
+    thr = ee.Number(stats.get('NDTI'))
+
+    ## Create mask
+    mask_ndti = ndti.gte(thr)
+
+    ## apply mask to SWIR band, which will be the most sensitive to
+    ## turbidity in this case, even more than NIR
+    mask_img = image.select(swir).rename('SWIR').updateMask(mask_ndti)
+    
+    ## Get mean and mode values
+    stats2 = mask_img.reduceRegion(**{
+      'reducer': ee.Reducer.mean().combine({
+        'reducer2': ee.Reducer.mode(),
+        'sharedInputs': True}),
+      'geometry': geometry,
+      'scale':10,
+      'maxPixels': 1e13,
+      'crs': 'EPSG:4326'})
+    mean = ee.Number(stats2.get('SWIR_mean'))
+    mode = ee.Number(stats2.get('SWIR_mode'))
+
+    ## Use mode or mean values as threshold and mask turbidity
+    maskTurbidity = ee.Algorithms.If(**{
+      'condition': mode.gte(0.005),
+      'trueCase': mask_img.updateMask(mask_img.gte(mode)).mask(),
+      'falseCase': mask_img.updateMask(mask_img.gte(mean)).mask()
+    })
+
+    ## Separate turbidity from possible seagrass patches masked.
+    ## NIR and Blue bands works better to mask shallow seagrass
+    ## NDSI = normalizes difference seagrass index
+    ndsi = image.normalizedDifference([nir,blue]).rename('NDSI')
+    
+    ## Get mean value of the 80-100 percentile
+    stats3 = ndsi.reduceRegion(**{
+      'reducer': ee.Reducer.intervalMean(80,100),
+      'geometry': geometry,
+      'scale':10,
+      'maxPixels': 1e13,
+      'crs': 'EPSG:4326'})
+    thr2 = ee.Number(stats3.get('NDSI'))
+    
+    ## Apply threshold value and mask possible shallow seagrass patches.
+    ndsi_mask = ndsi.gte(thr2).Not()
+    final_output = ee.Image(maskTurbidity).updateMask(ndsi_mask)
+    final_output = final_output.unmask(0).clip(geometry)
+    return final_output
+
+###############################################################################
 
 # =============================================================================
 #  Depth-Invariant Index
