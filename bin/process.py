@@ -1,12 +1,20 @@
 def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dataFolder,smoothStr,nameCode,regionCountry,state,imageList,sand_areas,groundPoints,land,regions):
     
-    import ee
     import pandas as pd
     import xlsxwriter
     import datetime
     from functions import CloudScore6S,landMaskFunction,DII
     
-    ee.Initialize()
+    from google.colab import auth
+    auth.authenticate_user()
+
+    import google
+    SCOPES = ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/earthengine']
+    CREDENTIALS, project_id = google.auth.default(default_scopes=SCOPES)
+
+    import ee
+    ee.Initialize(CREDENTIALS, project='earth-engine-252816')
+
     
     print('Initiating...')
 
