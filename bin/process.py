@@ -284,7 +284,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
             sat = 'Landsat'
 
         ## Select classified image
-        output_image = ee.Image(classifySVM)
+        output_image = ee.Image(classifiedSVM)
 
         # set some properties for exported image:
         output = output_image.set({'country': regionCountry,
