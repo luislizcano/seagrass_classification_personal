@@ -1,5 +1,10 @@
 def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dataFolder,smoothStr,nameCode,regionCountry,state,imageList,sand_areas,groundPoints,land,regions):
     
+    import ee
+    import pandas as pd
+    import xlsxwriter
+    import datetime
+    
     print('Initiating...')
 
     ## Initiate loop:
