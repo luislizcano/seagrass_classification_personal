@@ -239,7 +239,7 @@ def turbidityMask(image,geometry,nir,swir,blue,land):
     
     ## Get mean and mode values
     stats2 = mask_img.reduceRegion(**{
-      'reducer': ee.Reducer.mean().combine({
+      'reducer': ee.Reducer.mean().combine(**{
         'reducer2': ee.Reducer.mode(),
         'sharedInputs': True}),
       'geometry': geometry,
