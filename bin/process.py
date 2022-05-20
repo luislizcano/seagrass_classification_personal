@@ -146,7 +146,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         # 3: Sparse seagrass //if available
 
         ## Filter ground points by tile geometry and display classes
-        filterPoints = ee.FeatureCollection(groundPoints).filterBounds(imageGeometry)
+        filterPoints = ee.FeatureCollection(groundPoints).filterBounds(regions)
 
         ## Select bands to sample. The B/G band is B2B3 in Sentinel-2 and Landsat-8, and B1B2 for Landsat-7/5
         if 'Sentinel' in imageSat or 'Landsat8' in imageSat:
@@ -156,7 +156,8 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
             bandsClass = ['B1','B2', 'B3', 'B1B2']
             bg = ['B1B2']
 
-        ## Add bands of interest to sample training points:
+        ## Add bands of interest to sample training points.
+        ## Use image with no turbidity mask
         imageClassify = landMask.addBands(imageDII.select(bg)).select(bandsClass)
 
 
@@ -173,10 +174,10 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
             imageClassify = imageClassify.convolve(smooth)
 
 
-        ##########################   CLIP TO REGION   ############################
+        ###################   CLIP TO REGION & APPLY MASKS   #####################
         # seagrass_mask = ee.Image("users/lizcanosandoval/Seagrass/SeagrassMask_FL_100m")
         # imageClassify = imageClassify.updateMask(seagrass_mask) #For raster
-        aoi = regions.filter(ee.Filter.eq('name',regionName))
+        
         imageClassify = imageClassify.clip(aoi)
 
 
