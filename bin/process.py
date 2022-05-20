@@ -122,8 +122,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         ndwiMask = tidalMask(landMask,nir,green)
         
         ## Apply turbidity mask for the whole image
-        finalMask = turbidityMask(ndwiMask,imageGeometry,nir,swir,blue)
-        finalMask = finalMask.updateMask(land.max())
+        finalMask = turbidityMask(ndwiMask,imageGeometry,nir,swir,blue,land)
         
         print('   Image masked...')
         
@@ -183,8 +182,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         # imageClassify = imageClassify.updateMask(seagrass_mask) #For raster
         imageClassify = imageClassify.clip(aoi)
         imageClassify = tidalMask(imageClassify,nir,green)
-        imageClassify = turbidityMask(imageClassify,aoi,nir,swir,blue)
-        imageClassify = imageClassify.updateMask(land.max())
+        imageClassify = turbidityMask(imageClassify,aoi,nir,swir,blue,land)
 
 
         ################    GET TRAINING AND VALIDATION DATA    ##################
