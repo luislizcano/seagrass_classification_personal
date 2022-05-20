@@ -200,7 +200,7 @@ def landMaskFunction(image,geometry):
 def tidalMask(image,nir,green):
     ndwi = image.normalizedDifference([nir,green]).rename('ndwi')
     ndwiMask = ndwi.focalMedian(2).gte(-0.4).Not()
-    imgMasked = landMask.updateMask(ndwiMask)
+    imgMasked = image.updateMask(ndwiMask)
     return imgMasked
 
 ###############################################################################
@@ -215,8 +215,9 @@ def tidalMask(image,nir,green):
 # nir = str nir band
 # swir = str swir band
 # blue = str blue band
+# land = raster to mask land
 # =============================================================================
-def turbidityMask(image,geometry,nir,swir,blue):
+def turbidityMask(image,geometry,nir,swir,blue,land):
     ## Use NIR and SWIR1 bands to generate an index for turbidity
     ndti = image.normalizedDifference([nir,swir]).rename('NDTI').focalMean(2)
 
@@ -271,9 +272,12 @@ def turbidityMask(image,geometry,nir,swir,blue):
     
     ## Apply threshold value and mask possible shallow seagrass patches.
     ndsi_mask = ndsi.gte(thr2).Not()
-    final_output = ee.Image(maskTurbidity).updateMask(ndsi_mask)
-    final_output = final_output.unmask(0).clip(geometry)
-    return final_output
+    final_mask = ee.Image(maskTurbidity).updateMask(ndsi_mask)
+    final_mask = final_mask.unmask(0).clip(geometry)
+    final_mask = final_mask.updateMask(land.max())
+    output = image.updateMask(final_mask)
+    
+    return output
 
 ###############################################################################
 
