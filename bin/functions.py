@@ -233,9 +233,9 @@ def turbidityMask(image,geometry,nir,swir,blue,land):
     ## Create mask
     mask_ndti = ndti.gte(thr)
 
-    ## apply mask to SWIR band, which will be the most sensitive to
-    ## turbidity in this case, even more than NIR
-    mask_img = image.select(swir).rename('SWIR').updateMask(mask_ndti)
+    ## apply mask to NIR band, which will be the most sensitive to
+    ## turbidity in this case, even more than Red-Edge
+    mask_img = image.select(nir).rename('NIR').updateMask(mask_ndti)
     
     ## Get mean and mode values
     stats2 = mask_img.reduceRegion(**{
@@ -246,8 +246,8 @@ def turbidityMask(image,geometry,nir,swir,blue,land):
       'scale':10,
       'maxPixels': 1e13,
       'crs': 'EPSG:4326'})
-    mean = ee.Number(stats2.get('SWIR_mean'))
-    mode = ee.Number(stats2.get('SWIR_mode'))
+    mean = ee.Number(stats2.get('NIR_mean'))
+    mode = ee.Number(stats2.get('NIR_mode'))
 
     ## Use mode or mean values as threshold and mask turbidity
     maskTurbidity = ee.Algorithms.If(**{
