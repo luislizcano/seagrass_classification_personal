@@ -312,6 +312,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
             assetId = path,
             region = imageGeometry.buffer(10),                                      
             maxPixels = 1e13,
+            crs = 'EPSG:4326',
             scale = imageScale).start()
         print('   Classified Image '+str(i+1)+': '+fileName+' submitted...')
 
