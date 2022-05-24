@@ -281,7 +281,7 @@ def turbidityMask(image,geometry,nir,swir,blue,land):
     ndsi_mask = ndsi.gte(thr2).Not()
     final_mask = ee.Image(maskTurbidity).updateMask(ndsi_mask)
     final_mask = final_mask.unmask(0).clip(geometry)
-    final_mask = final_mask.updateMask(land.max()).Not().convolve(smooth)
+    final_mask = final_mask.updateMask(land.max()).Not()#.convolve(smooth)
     output = image.updateMask(final_mask)
     
     return output
