@@ -154,7 +154,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         # 3: Sparse seagrass //if available
 
         ## Filter ground points by AOI and display classes
-        filterPoints = ee.FeatureCollection(groundPoints).filterBounds(aoi)
+        filterPoints = ee.FeatureCollection(groundPoints).filterBounds(aoi).filterBounds(imageGeometry)
 
         ## Select bands to sample. The B/G band is B2B3 in Sentinel-2 and Landsat-8, and B1B2 for Landsat-7/5
         if 'Sentinel' in imageSat or 'Landsat8' in imageSat:
