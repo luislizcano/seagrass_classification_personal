@@ -122,10 +122,13 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
             blue = 'B1'
         
         ## Apply tidal flat mask
-        ndwiMask = tidalMask(landMask,nir,green)
+        #ndwiMask = tidalMask(landMask,nir,green)
         
         ## Apply turbidity mask for the whole image
-        finalMask = turbidityMask(ndwiMask,imageGeometry,nir,swir,blue,land)
+        #finalMask = turbidityMask(ndwiMask,imageGeometry,nir,swir,blue,land)
+        finalMask = landMask
+        ## NOTE: using tidal flat and turbidity mask before the DII calculation
+        ## was producing weird classification outputs.
         
         print('   Image masked...')
         
