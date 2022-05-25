@@ -174,7 +174,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         mask2 = turbidityMask(mask1,aoi,nir,swir,blue,land)
         
         ## Add bands of interest to sample training points.
-        imageClassify = mask2.addBands(imageDII.select(bg)).select(bandsClass)
+        imageClassify = mask2.select(bandsClass)
 
 
         ###########################    APPLY SMOOTHER    #########################
