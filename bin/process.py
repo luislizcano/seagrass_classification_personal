@@ -377,7 +377,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
                         .rename(columns={0:'TraPoints',1:'ValPoints'}).rename({'0':'Sb','1':'Hb','2':'Dn'},axis='index')
 
         # Organize each matrix in separate excel sheets
-        excelName = 'Mrx'+ smoothStr + imageID +'.xlsx'
+        excelName = 'Mrx'+ smoothStr + imageID + '_' + nameCode +'.xlsx'
         excel = pd.ExcelWriter(excelName, engine='xlsxwriter')
 
         Points_concat.to_excel(excel, sheet_name='Points', index=True, startrow=0)
