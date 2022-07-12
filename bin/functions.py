@@ -223,7 +223,7 @@ def turbidityMask(image,geometry,nir,swir,blue,land):
     
     ## Apply kernel to smooth NDTI
     kernel = ee.Kernel.euclidean(**{
-        'radius':3,'units':'pixels','normalize':false})
+        'radius':3,'units':'pixels','normalize':False})
     ndti = ndti.convolve(kernel)
     
     ## Get median value in the region of interest and use as threshold.
