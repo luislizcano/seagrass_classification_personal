@@ -220,7 +220,12 @@ def tidalMask(image,nir,green):
 def turbidityMask(image,geometry,nir,swir,blue,land):
     ## Use NIR and SWIR1 bands to generate an index for turbidity
     ndti = image.normalizedDifference([nir,swir]).rename('NDTI')
-
+    
+    ## Apply kernel to smooth NDTI
+    kernel = ee.Kernel.euclidean(**{
+        'radius':3,'units':'pixels','normalize':false})
+    ndti = ndti.convolve(kernel)
+    
     ## Get median value in the region of interest and use as threshold.
     stats = ndti.reduceRegion(**{
       'reducer': ee.Reducer.median(),
