@@ -378,7 +378,8 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
 
         # Organize each matrix in separate excel sheets
         excelName = 'Mrx'+ smoothStr + imageID + '_' + nameCode +'.xlsx'
-        excel = pd.ExcelWriter(excelName, engine='xlsxwriter')
+        excelDir = '/content/drive/My Drive/FromGEE/Matrices/'+excelName
+        excel = pd.ExcelWriter(excelDir, engine='xlsxwriter')
 
         Points_concat.to_excel(excel, sheet_name='Points', index=True, startrow=0)
         TM_concat.to_excel(excel, sheet_name='TrMrx', index=True, startrow=0)
