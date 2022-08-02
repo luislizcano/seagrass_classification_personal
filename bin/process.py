@@ -248,7 +248,12 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
 
         #### Classify the image using the trained classifier
         classifiedSVM = imageClassify.classify(trainSVM)
-
+        
+        ## Reproject output:
+        classifiedSVM = classifiedSVM.reproject(**{
+            'crs': 'EPSG:4326',
+            'scale':imageScale
+        })
 
         #######################    TRAINING ACCURACIES    ########################
         print('   Getting accuracies...')
