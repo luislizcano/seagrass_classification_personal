@@ -1,5 +1,26 @@
 def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dataFolder,smoothStr,
-                     nameCode,regionCountry,state,imageList,sand_areas,groundPoints,land,regions):
+                     nameCode,regionCountry,state,imageList,sand_areas,groundPoints,land,regions,flat,turbid):
+    """
+    Description of arguments required:
+    ----------------------------------
+    imageSource (str) = use 'ee' or 'assets'. It defines whether the L2 images comes from the Earth Engine catalog or user Assets.
+    satellite (str)   = use 'Sentinel2', 'Landsat8', 'Landsat7', or 'Landsat5'. It defines the type of satellite sensor.
+    regionName (str)  = used as metadata, and for loading predefined geometries used along the script.
+    boaFolder (str)   = user defined location of imageCollection containing L2 images from user Assets. Only used if imageSource is set as 'Assets'.
+    exportFolder (str)= user defined location to save classified images in user EE Assets.
+    dataFolder (str)  = user defined folder name of ground-truth dataset in user Assets. It is complement of groundPoints argument.
+    smoothStr (str)   = use 'smooth' or 'raw' to decide whether to apply a convolution kernel for smoothing L2 image before classification.
+    nameCode (str)    = used as metadata. Unique codes of four digits related to the loaded region in regionName.
+    regionCountry(str)= used as metadata. Country of the region of interest.
+    state (str)       = used as metadata. State of the region of interest, if applicable.
+    imageList (list)  = list of specific image IDs.
+    sand_areas (ee object) = to import featureCollection (dataset) of sand polygons for DII.
+    groundPoints (ee object) = to import featureCollection (dataset) of ground-truth points.
+    land (ee object)  = to import imageCollection (dataset) of predefined images to mask land.
+    regions (ee object) = to import featureCollection (dataset) of predefined region geometries.
+    flat (int)        = use 1 to apply tidal flat mask, if not set as 0.
+    turbid (int)      = use 1 to apply turbidity mask, if not set as 0.
+    """
     
     import pandas as pd
     import xlsxwriter
@@ -173,11 +194,13 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         ## Add B/G band and clip:
         imageClassify = landMask.addBands(imageDII.select(bg)).clip(aoi)
         ## Create masks
-        mask1 = tidalMask(imageClassify,nir,green)
-        mask2 = turbidityMask(mask1,aoi,nir,swir,blue,land)
+        if flat == 1:
+          imageClassify = tidalMask(imageClassify,nir,green)
+        if turbid == 1:
+          imageClassify = turbidityMask(imageClassify,aoi,nir,swir,blue,land)
         
         ## Add bands of interest to sample training points.
-        imageClassify = mask2.select(bandsClass)
+        imageClassify = imageClassify.select(bandsClass)
 
 
         ###########################    APPLY SMOOTHER    #########################
