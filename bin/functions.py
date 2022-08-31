@@ -114,7 +114,7 @@ def CloudScore6S(sat, img, cloudThresh):
         
     elif 'Landsat7' in sat:
         ## Compute several indicators of cloudyness and take the minimum of them.
-        ## Bands required: [B1,B2,B3,B4,B5,B6_VCID_1,B7]
+        ## Bands required: [B1,B2,B3,B4,B5,B6,B7]
         score = ee.Image(1.0)
 
         ## Clouds are reasonably bright in the blue band.
@@ -129,7 +129,7 @@ def CloudScore6S(sat, img, cloudThresh):
         score =  score.min(rescale(img, 'img.B4 + img.B5 + img.B7', [0.01, 0.8])) #.multiply(100).byte();
 
         ## Clouds are reasonably cool in temperature.
-        score = score.min(rescale(img,'img.B6_VCID_1', [296, 280]));
+        score = score.min(rescale(img,'img.B6', [296, 280]));
         
         ## However, clouds are not snow.
         ## (((GREEN−SWIR1)/(GREEN+SWIR1))−0.8) / (0.6−0.8)
