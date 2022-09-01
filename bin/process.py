@@ -163,7 +163,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
           sand = ee.FeatureCollection(sand_areas).filterBounds(imageGeometry)
 
           ## Run the Depth-Invariant Index Function
-          imageDII = DII(finalMask, imageScale, sand)
+          imageDII = DII(landMask, imageScale, sand)
 
           ## Select bands to sample. The B/G band is B2B3 in Sentinel-2 and Landsat-8, and B1B2 for Landsat-7/5
           if 'Sentinel' in imageSat or 'Landsat8' in imageSat:
