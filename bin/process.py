@@ -1,5 +1,5 @@
 def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dataFolder,smoothStr,
-                     nameCode,regionCountry,state,imageList,sand_areas,groundPoints,land,regions,flat,turbid):
+                     nameCode,regionCountry,state,imageList,sand_areas,groundPoints,land,regions,dii,flat,turbid):
     """
     Description of arguments required:
     ----------------------------------
@@ -18,6 +18,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
     groundPoints (ee object) = to import featureCollection (dataset) of ground-truth points.
     land (ee object)  = to import imageCollection (dataset) of predefined images to mask land.
     regions (ee object) = to import featureCollection (dataset) of predefined region geometries.
+    dii (int)         = use 1 to apply depth invariant index and add it as band, if not set as 0.
     flat (int)        = use 1 to apply tidal flat mask, if not set as 0.
     turbid (int)      = use 1 to apply turbidity mask, if not set as 0.
     """
@@ -147,7 +148,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         
         ## Apply turbidity mask for the whole image
         #finalMask = turbidityMask(ndwiMask,imageGeometry,nir,swir,blue,land)
-        finalMask = landMask
+        #finalMask = landMask
         ## NOTE: using tidal flat and turbidity mask before the DII calculation
         ## was producing weird classification outputs.
         
@@ -155,18 +156,34 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         
         
         ####################    WATER COLUMN CORRECTION    #######################    
+        
+        if dii == 1:
+          ## Filter sand polygons by tile/area:
+          #sand = ee.FeatureCollection(sand_areas).flatten().filterBounds(imageGeometry)
+          sand = ee.FeatureCollection(sand_areas).filterBounds(imageGeometry)
 
-        ## Filter sand polygons by tile/area:
-        #sand = ee.FeatureCollection(sand_areas).flatten().filterBounds(imageGeometry)
-        sand = ee.FeatureCollection(sand_areas).filterBounds(imageGeometry)
+          ## Run the Depth-Invariant Index Function
+          imageDII = DII(finalMask, imageScale, sand)
 
-        ## Run the Depth-Invariant Index Function
-        imageDII = DII(finalMask, imageScale, sand)
+          ## Select bands to sample. The B/G band is B2B3 in Sentinel-2 and Landsat-8, and B1B2 for Landsat-7/5
+          if 'Sentinel' in imageSat or 'Landsat8' in imageSat:
+              bandsClass = ['B1','B2', 'B3', 'B4','B2B3']
+              bg = ['B2B3']
+          else:
+              bandsClass = ['B1','B2', 'B3', 'B1B2']
+              bg = ['B1B2']
+          finalImage = landMask.addBands(imageDII.select(bg))
+          print('   Depth-Invariant index applied...')
+        else:
+          ## Select bands to sample. The B/G band is B2B3 in Sentinel-2 and Landsat-8, and B1B2 for Landsat-7/5
+          if 'Sentinel' in imageSat or 'Landsat8' in imageSat:
+              bandsClass = ['B1','B2', 'B3', 'B4']
+          else:
+              bandsClass = ['B1','B2', 'B3']
+          finalImage = landMask
 
-        print('   Depth-Invariant index applied...')
 
-
-        #########################    SAMPLING BANDS    ###########################
+        #######################    LOAD TRAINING DATA    ########################
         # Classes are:
 
         # 0: Softbottom
@@ -177,14 +194,6 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         ## Filter ground points by AOI and display classes
         filterPoints = ee.FeatureCollection(groundPoints).filterBounds(aoi).filterBounds(imageGeometry)
 
-        ## Select bands to sample. The B/G band is B2B3 in Sentinel-2 and Landsat-8, and B1B2 for Landsat-7/5
-        if 'Sentinel' in imageSat or 'Landsat8' in imageSat:
-            bandsClass = ['B1','B2', 'B3', 'B4','B2B3']
-            bg = ['B2B3']
-        else:
-            bandsClass = ['B1','B2', 'B3', 'B1B2']
-            bg = ['B1B2']
-
 
         ###################   CLIP TO REGION & APPLY MASKS   #####################
         ## Apply tidal flat & turbidity masks to specific region of interest:
@@ -192,7 +201,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         # imageClassify = imageClassify.updateMask(seagrass_mask) #For raster
         ## Use image with no turbidity mask
         ## Add B/G band and clip:
-        imageClassify = landMask.addBands(imageDII.select(bg)).clip(aoi)
+        imageClassify = finalImage.clip(aoi)
         ## Create masks
         if flat == 1:
           imageClassify = tidalMask(imageClassify,nir,green)
