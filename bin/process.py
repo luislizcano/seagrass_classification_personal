@@ -53,9 +53,9 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         if 'assets'== imageSource:
             ## Load BOA image from assets:
             if 'Sentinel' in satellite:
-                imageTarget = ee.Image("users/lizcanosandoval/BOA/Sentinel/"+boaFolder+'/'+imageID)
+                imageTarget = ee.Image("projects/imars-3d-wetlands/Sentinel-2_L2_Luis/"+boaFolder+'/'+imageID)
             elif 'Landsat' in satellite:
-                imageTarget = ee.Image("users/lizcanosandoval/BOA/Landsat/"+boaFolder+'/'+imageID)
+                imageTarget = ee.Image("projects/imars-3d-wetlands/Sentinel-2_L2_Luis/"+boaFolder+'/'+imageID)
             ## Get image metadata:
             imageSat = imageTarget.get('satellite').getInfo() #Image satellite
             imageTile = imageTarget.get('tile_id').getInfo() #Image tile id
