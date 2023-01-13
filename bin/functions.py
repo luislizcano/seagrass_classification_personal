@@ -93,10 +93,10 @@ def CloudScore6S(sat, img, cloudThresh):
 
         ## Clouds are reasonably bright in all visible bands.
         ## (BLUE+GREEN+RED−0.2) / (0.8−0.2)
-        score = score.min(rescale(img, 'img.B4 + img.B3 + img.B2', [0.01, 0.8]))
+        score = score.min(rescale(img, 'img.B4 + img.B3 + img.B2', [0.2, 0.8])) ## if [0.01, 0.8] - very sensitive to glint
 
         ## (((NIR−SWIR1)/(NIR+SWIR1))+0.1) / (0.1+0.1)
-        score =  score.min(rescale(img, 'img.B5 + img.B6 + img.B7', [0.01, 0.8])) #.multiply(100).byte();
+        score =  score.min(rescale(img, 'img.B5 + img.B6 + img.B7', [0.1, 0.8])) #.multiply(100).byte();
 
         ## Clouds are reasonably cool in temperature.
         score = score.min(rescale(img,'img.B10', [296, 280]));
@@ -123,10 +123,10 @@ def CloudScore6S(sat, img, cloudThresh):
 
         ## Clouds are reasonably bright in all visible bands.
         ## (BLUE+GREEN+RED−0.2) / (0.8−0.2)
-        score = score.min(rescale(img, 'img.B3 + img.B2 + img.B1', [0.01, 0.8]))
+        score = score.min(rescale(img, 'img.B3 + img.B2 + img.B1', [0.2, 0.8]))
 
         ## (((NIR−SWIR1)/(NIR+SWIR1))+0.1) / (0.1+0.1)
-        score =  score.min(rescale(img, 'img.B4 + img.B5 + img.B7', [0.01, 0.8])) #.multiply(100).byte();
+        score =  score.min(rescale(img, 'img.B4 + img.B5 + img.B7', [0.1, 0.8])) #.multiply(100).byte();
 
         ## Clouds are reasonably cool in temperature.
         score = score.min(rescale(img,'img.B6', [296, 280]));
@@ -153,10 +153,10 @@ def CloudScore6S(sat, img, cloudThresh):
 
         ## Clouds are reasonably bright in all visible bands.
         ## (BLUE+GREEN+RED−0.2) / (0.8−0.2)
-        score = score.min(rescale(img, 'img.B3 + img.B2 + img.B1', [0.01, 0.8]))
+        score = score.min(rescale(img, 'img.B3 + img.B2 + img.B1', [0.2, 0.8]))
 
         ## (((NIR−SWIR1)/(NIR+SWIR1))+0.1) / (0.1+0.1)
-        score =  score.min(rescale(img, 'img.B4 + img.B5 + img.B7', [0.01, 0.8])) #.multiply(100).byte();
+        score =  score.min(rescale(img, 'img.B4 + img.B5 + img.B7', [0.1, 0.8])) #.multiply(100).byte();
 
         ## Clouds are reasonably cool in temperature.
         score = score.min(rescale(img,'img.B6', [296, 280]));
