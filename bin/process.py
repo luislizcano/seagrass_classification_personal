@@ -300,7 +300,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         userAccuracySVM = errorMatrixSVM.consumersAccuracy()
 
         print('    Producer accuracy [Seagrass]: ',producerAccuracySVM.get([2,0]).getInfo())
-        print('    User accuracy [Seagrass]: ',userAccuracySVM.get([2, 0]).getInfo())
+        print('    User accuracy [Seagrass]: ',userAccuracySVM.get([0,2]).getInfo())
 
 
         #######################    KAPPA COEFFICIENTS    #########################
