@@ -299,6 +299,9 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         # USER
         userAccuracySVM = errorMatrixSVM.consumersAccuracy()
 
+        print('    Producer accuracy [Seagrass]: ',producerAccuracySVM.get([2,0]).getInfo())
+        print('    User accuracy [Seagrass]: ',userAccuracySVM.get([2, 0]).getInfo())
+
 
         #######################    KAPPA COEFFICIENTS    #########################
 
@@ -310,7 +313,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         # indicates the classification is significantly worse than random. A value close to 1 
         # indicates that the classification is significantly better than random.
         kappaSVM = errorMatrixSVM.kappa()
-
+        print('    Kappa: ',kappaSVM.getInfo())
 
 
         ####################    EXPORT CLASSIFIED IMAGES    ######################
