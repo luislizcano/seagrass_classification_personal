@@ -18,6 +18,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
     groundPoints (ee object) = to import featureCollection (dataset) of ground-truth points.
     land (ee object)  = to import imageCollection (dataset) of predefined images to mask land.
     regions (ee object) = to import featureCollection (dataset) of predefined region geometries.
+    cloud (int)       = use 1 to apply cloud mask, if not set as 0.
     dii (int)         = use 1 to apply depth invariant index and add it as band, if not set as 0.
     flat (int)        = use 1 to apply tidal flat mask, if not set as 0.
     turbid (int)      = use 1 to apply turbidity mask, if not set as 0.
@@ -105,43 +106,45 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
 
 
         ###########################    CLOUD MASK    #############################
-
-        ## Recommended Threshold values for
-        ## *Sentinel: 2
-        ## *Landsat: 5
-        if 'Sentinel' in imageSat:
-            threshold = 5
-        else:
-            threshold = 5
-
-        ## Apply cloud mask
-        cloudMask = CloudScore6S(imageSat, imageTarget, threshold)
+        if cloud == 1:
+          ## Recommended Threshold values for
+          ## *Sentinel: 2
+          ## *Landsat: 5
+          if 'Sentinel' in imageSat:
+              threshold = 5
+          else:
+              threshold = 5
+  
+          ## Apply cloud mask
+          imageTarget = CloudScore6S(imageSat, imageTarget, threshold)
 
 
         #############################    LAND MASK    ############################
 
         ## Apply land mask
-        #landMask = landMaskFunction(cloudMask, land) ## Use if Land is a featureCollection
-        landMask = cloudMask.updateMask(land.max()) ## Use if Land is an imageCollection
+        #landMask = landMaskFunction(imageTarget, land) ## Use if Land is a featureCollection
+        landMask = imageTarget.updateMask(land.max()) ## Use if Land is an imageCollection
 
 
         ###################   MASK TIDAL FLATS & TURBIDITY  ######################
+        ## NOTE: using tidal flat and turbidity mask before the DII calculation
+        ## was producing weird classification outputs. So, skip this part.  
         ## Set parameter values
-        if 'Sentinel' in imageSat:
-            nir = 'B8'
-            green = 'B3'
-            swir = 'B11'
-            blue = 'B2'
-        elif 'Landsat8' in imageSat:
-            nir = 'B5'
-            green = 'B3'
-            swir = 'B6'
-            blue = 'B2'
-        else:
-            nir = 'B4'
-            green = 'B2'
-            swir = 'B5'
-            blue = 'B1'
+        # if 'Sentinel' in imageSat:
+        #     nir = 'B8'
+        #     green = 'B3'
+        #     swir = 'B11'
+        #     blue = 'B2'
+        # elif 'Landsat8' in imageSat:
+        #     nir = 'B5'
+        #     green = 'B3'
+        #     swir = 'B6'
+        #     blue = 'B2'
+        # else:
+        #     nir = 'B4'
+        #     green = 'B2'
+        #     swir = 'B5'
+        #     blue = 'B1'
         
         ## Apply tidal flat mask
         #ndwiMask = tidalMask(landMask,nir,green)
@@ -149,9 +152,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         ## Apply turbidity mask for the whole image
         #finalMask = turbidityMask(ndwiMask,imageGeometry,nir,swir,blue,land)
         #finalMask = landMask
-        ## NOTE: using tidal flat and turbidity mask before the DII calculation
-        ## was producing weird classification outputs.
-        
+                
         print('   Image masked...')
         
         
