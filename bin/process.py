@@ -431,7 +431,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         Kp_concat.to_excel(excel, sheet_name='Kappa', index=True, startrow=0)
 
         # Save matrices as .xlsx file:
-        excel.save()
+        excel.close()
         print('   Saved Matrices of '+imageID)
 
     print('ALL IMAGES HAVE BEEN CLASSIFIED!')
