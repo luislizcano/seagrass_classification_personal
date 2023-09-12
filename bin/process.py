@@ -1,5 +1,5 @@
 def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dataFolder,smoothStr,
-                     nameCode,regionCountry,state,imageList,sand_areas,groundPoints,land,regions,dii,flat,turbid):
+                     nameCode,regionCountry,state,imageList,sand_areas,groundPoints,land,regions,cloud,dii,flat,turbid):
     """
     Description of arguments required:
     ----------------------------------
