@@ -67,7 +67,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         if 'ee'== imageSource:
             ## Load BOA image collection from EE cloud:
             if 'Sentinel' in satellite:
-                image = ee.Image("COPERNICUS/S2_SR/"+imageID)
+                image = ee.Image("COPERNICUS/S2_SR_HARMONIZED/"+imageID)
                 imageTarget = image.divide(10000).set(image.toDictionary(image.propertyNames()))
                 imageSat = imageTarget.get('SPACECRAFT_NAME').getInfo() #Image satellite
                 imageTile = imageTarget.get('MGRS_TILE').getInfo() #Image tile id
