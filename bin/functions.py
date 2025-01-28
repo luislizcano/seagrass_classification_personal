@@ -85,25 +85,25 @@ def CloudScore6S(sat, img, cloudThresh):
 
         ## Clouds are reasonably bright in the blue band.
         ## (BLUE−0.1) / (0.5−0.1)
-        score = score.min(rescale(img, 'img.B2', [0.01, 0.3])) #[0.01,0.5]-for ocean
+        score = score.min(rescale(img, 'img.SR_B2', [0.01, 0.3])) #[0.01,0.5]-for ocean
 
         ## Aerosols.
         ## (AEROSOL−0.1) / (0.3−0.1)
-        score = score.min(rescale(img, 'img.B1', [0.01, 0.3])) #[0.01,0.5]-for ocean
+        score = score.min(rescale(img, 'img.SR_B1', [0.01, 0.3])) #[0.01,0.5]-for ocean
 
         ## Clouds are reasonably bright in all visible bands.
         ## (BLUE+GREEN+RED−0.2) / (0.8−0.2)
-        score = score.min(rescale(img, 'img.B4 + img.B3 + img.B2', [0.2, 0.8])) ## if [0.01, 0.8] - very sensitive to glint
+        score = score.min(rescale(img, 'img.SR_B4 + img.SR_B3 + img.SR_B2', [0.2, 0.8])) ## if [0.01, 0.8] - very sensitive to glint
 
         ## (((NIR−SWIR1)/(NIR+SWIR1))+0.1) / (0.1+0.1)
-        score =  score.min(rescale(img, 'img.B5 + img.B6 + img.B7', [0.1, 0.8])) #.multiply(100).byte();
+        score =  score.min(rescale(img, 'img.SR_B5 + img.SR_B6 + img.SR_B7', [0.1, 0.8])) #.multiply(100).byte();
 
         ## Clouds are reasonably cool in temperature.
-        score = score.min(rescale(img,'img.B10', [296, 280]));
+        score = score.min(rescale(img,'img.ST_B10', [296, 280]));
         
         ## However, clouds are not snow.
         ## (((GREEN−SWIR1)/(GREEN+SWIR1))−0.8) / (0.6−0.8)
-        ndsi = img.normalizedDifference(['B3', 'B6'])
+        ndsi = img.normalizedDifference(['SR_B3', 'SR_B6'])
         score =  score.min(rescale(ndsi, 'img', [0.8, 0.6])).multiply(100).byte();
         ##Map.addLayer(score,{'min':0,'max':100});
         
@@ -119,21 +119,21 @@ def CloudScore6S(sat, img, cloudThresh):
 
         ## Clouds are reasonably bright in the blue band.
         ## (BLUE−0.1) / (0.5−0.1)
-        score = score.min(rescale(img, 'img.B1', [0.01, 0.3])) #[0.01,0.5]-for ocean
+        score = score.min(rescale(img, 'img.SR_B1', [0.01, 0.3])) #[0.01,0.5]-for ocean
 
         ## Clouds are reasonably bright in all visible bands.
         ## (BLUE+GREEN+RED−0.2) / (0.8−0.2)
-        score = score.min(rescale(img, 'img.B3 + img.B2 + img.B1', [0.2, 0.8]))
+        score = score.min(rescale(img, 'img.SR_B3 + img.SR_B2 + img.SR_B1', [0.2, 0.8]))
 
         ## (((NIR−SWIR1)/(NIR+SWIR1))+0.1) / (0.1+0.1)
-        score =  score.min(rescale(img, 'img.B4 + img.B5 + img.B7', [0.1, 0.8])) #.multiply(100).byte();
+        score =  score.min(rescale(img, 'img.SR_B4 + img.SR_B5 + img.SR_B7', [0.1, 0.8])) #.multiply(100).byte();
 
         ## Clouds are reasonably cool in temperature.
-        score = score.min(rescale(img,'img.B6', [296, 280]));
+        score = score.min(rescale(img,'img.ST_B6', [296, 280]));
         
         ## However, clouds are not snow.
         ## (((GREEN−SWIR1)/(GREEN+SWIR1))−0.8) / (0.6−0.8)
-        ndsi = img.normalizedDifference(['B3', 'B5'])
+        ndsi = img.normalizedDifference(['SR_B3', 'SR_B5'])
         score =  score.min(rescale(ndsi, 'img', [0.8, 0.6])).multiply(100).byte();
         ##Map.addLayer(score,{'min':0,'max':100});
         
@@ -149,21 +149,21 @@ def CloudScore6S(sat, img, cloudThresh):
 
         ## Clouds are reasonably bright in the blue band.
         ## (BLUE−0.1) / (0.5−0.1)
-        score = score.min(rescale(img, 'img.B1', [0.01, 0.3])) #[0.01,0.5]-for ocean
+        score = score.min(rescale(img, 'img.SR_B1', [0.01, 0.3])) #[0.01,0.5]-for ocean
 
         ## Clouds are reasonably bright in all visible bands.
         ## (BLUE+GREEN+RED−0.2) / (0.8−0.2)
-        score = score.min(rescale(img, 'img.B3 + img.B2 + img.B1', [0.2, 0.8]))
+        score = score.min(rescale(img, 'img.SR_B3 + img.SR_B2 + img.SR_B1', [0.2, 0.8]))
 
         ## (((NIR−SWIR1)/(NIR+SWIR1))+0.1) / (0.1+0.1)
-        score =  score.min(rescale(img, 'img.B4 + img.B5 + img.B7', [0.1, 0.8])) #.multiply(100).byte();
+        score =  score.min(rescale(img, 'img.SR_B4 + img.SR_B5 + img.SR_B7', [0.1, 0.8])) #.multiply(100).byte();
 
         ## Clouds are reasonably cool in temperature.
-        score = score.min(rescale(img,'img.B6', [296, 280]));
+        score = score.min(rescale(img,'img.ST_B6', [296, 280]));
         
         ## However, clouds are not snow.
         ## (((GREEN−SWIR1)/(GREEN+SWIR1))−0.8) / (0.6−0.8)
-        ndsi = img.normalizedDifference(['B3', 'B5'])
+        ndsi = img.normalizedDifference(['SR_B3', 'SR_B5'])
         score =  score.min(rescale(ndsi, 'img', [0.8, 0.6])).multiply(100).byte();
         ##Map.addLayer(score,{'min':0,'max':100});
         
@@ -347,15 +347,15 @@ def DII(image, scale, sand):
     k2_3 = a2_3.add(((a2_3.multiply(a2_3).add(1))).pow(0.5))
 
     ## Depth invariance index DII
-    DII_1_2 = image_div.select('B1').log().subtract(image_div.select('B2').log().multiply(k1_2))
-    DII_1_3 = image_div.select('B1').log().subtract(image_div.select('B3').log().multiply(k1_3))
-    DII_2_3 = image_div.select('B2').log().subtract(image_div.select('B3').log().multiply(k2_3))
+    DII_1_2 = image_div.select(0).log().subtract(image_div.select(1).log().multiply(k1_2))
+    DII_1_3 = image_div.select(0).log().subtract(image_div.select(2).log().multiply(k1_3))
+    DII_2_3 = image_div.select(1).log().subtract(image_div.select(2).log().multiply(k2_3))
 
     ## Make depth invariance image
     DI_image = ee.Image()
-    DI_image = DI_image.addBands(DII_1_2.select(['B1'],['B1B2']))
-    DI_image = DI_image.addBands(DII_1_3.select(['B1'],['B1B3']))
-    DI_image = DI_image.addBands(DII_2_3.select(['B2'],['B2B3']))
+    DI_image = DI_image.addBands(DII_1_2.select([0],['B1B2']))
+    DI_image = DI_image.addBands(DII_1_3.select([0],['B1B3']))
+    DI_image = DI_image.addBands(DII_2_3.select([1],['B2B3']))
     DII = DI_image.select('B1B2','B1B3','B2B3')
     
     return ee.Image(DII)
