@@ -99,7 +99,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
                 imageDate = imageTarget.get('SENSING_TIME').getInfo()
                 imageGeometry = imageTarget.geometry() #Tile geometry.
             elif 'Landsat5' == satellite:
-                image = ee.Image("LANDSAT/LT05/C01/T1_SR/"+imageID)
+                image = ee.Image("LANDSAT/LT05/C02/T1_L2/"+imageID)
                 def applyScaleFactors(img):
                   opticalBands = img.select('SR_B.').multiply(0.0000275).add(-0.2)
                   thermalBands = img.select('ST_B6').multiply(0.00341802).add(149.0)
@@ -182,20 +182,25 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
           imageDII = DII(landMask, imageScale, sand)
 
           ## Select bands to sample. The B/G band is B2B3 in Sentinel-2 and Landsat-8, and B1B2 for Landsat-7/5
-          if 'Sentinel' in imageSat or 'Landsat8' in imageSat:
+          if 'Sentinel' in imageSat:
               bandsClass = ['B1','B2', 'B3', 'B4','B2B3']
               bg = ['B2B3']
+          elif 'Landsat8' in imageSat:
+              bandsClass = ['SR_B1','SR_B2', 'SR_B3', 'SR_B4','B2B3']
+              bg = ['B2B3']
           else:
-              bandsClass = ['B1','B2', 'B3', 'B1B2']
+              bandsClass = ['SR_B1','SR_B2', 'SR_B3', 'B1B2']
               bg = ['B1B2']
           finalImage = landMask.addBands(imageDII.select(bg))
           print('   Depth-Invariant index applied...')
         else:
           ## Select bands to sample. The B/G band is B2B3 in Sentinel-2 and Landsat-8, and B1B2 for Landsat-7/5
-          if 'Sentinel' in imageSat or 'Landsat8' in imageSat:
-              bandsClass = ['B1','B2', 'B3', 'B4']
+          if 'Sentinel' in imageSat:
+              bandsClass = ['B1','B2','B3','B4']
+          elif 'Landsat8' in imageSat:
+              bandsClass = ['SR_B1','SR_B2','SR_B3','SR_B4']
           else:
-              bandsClass = ['B1','B2', 'B3']
+              bandsClass = ['SR_B1','SR_B2','SR_B3']
           finalImage = landMask
 
 
