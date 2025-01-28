@@ -299,7 +299,8 @@ def turbidityMask(image,geometry,nir,swir,blue,land):
 def DII(image, scale, sand):
     
     ## Select the bands for the DIV
-    bands = ['B1','B2','B3']
+    #bands = ['B1','B2','B3']
+    bands = [0,1,2]
     image_div = ee.Image(image).select(bands)
     
     ## Calculate standard deviation
