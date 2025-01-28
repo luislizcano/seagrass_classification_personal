@@ -75,22 +75,37 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
                 imageDate = str(datetime.datetime.utcfromtimestamp(ee_date/1000.0)) #Image date
                 imageGeometry = imageTarget.geometry() #Tile geometry.
             elif 'Landsat8' == satellite:
-                image = ee.Image("LANDSAT/LC08/C01/T1_SR/"+imageID)
-                imageTarget = image.divide(10000).set(image.toDictionary(image.propertyNames()))
+                image = ee.Image("LANDSAT/LC08/C02/T1_L2/"+imageID)
+                def applyScaleFactors(img):
+                  opticalBands = img.select('SR_B.').multiply(0.0000275).add(-0.2)
+                  thermalBands = img.select('ST_B.*').multiply(0.00341802).add(149.0)
+                  addBands = img.addBands(opticalBands, None, True).addBands(thermalBands, None, True)
+                  return addBands.set(img.toDictionary(img.propertyNames()))
+                imageTarget = applyScaleFactors(image)
                 imageSat = satellite
                 imageTile = str(imageTarget.get('WRS_PATH').getInfo())+str(imageTarget.get('WRS_ROW').getInfo()) #Image tile id
                 imageDate = imageTarget.get('SENSING_TIME').getInfo()
                 imageGeometry = imageTarget.geometry() #Tile geometry.
             elif 'Landsat7' == satellite:
-                image = ee.Image("LANDSAT/LE07/C01/T1_SR/"+imageID)
-                imageTarget = image.divide(10000).set(image.toDictionary(image.propertyNames()))
+                image = ee.Image("LANDSAT/LE07/C02/T1_L2/"+imageID)
+                def applyScaleFactors(img):
+                  opticalBands = img.select('SR_B.').multiply(0.0000275).add(-0.2)
+                  thermalBands = img.select('ST_B6').multiply(0.00341802).add(149.0)
+                  addBands = img.addBands(opticalBands, None, True).addBands(thermalBands, None, True)
+                  return addBands.set(img.toDictionary(img.propertyNames()))
+                imageTarget = applyScaleFactors(image)
                 imageSat = satellite
                 imageTile = str(imageTarget.get('WRS_PATH').getInfo())+str(imageTarget.get('WRS_ROW').getInfo()) #Image tile id
                 imageDate = imageTarget.get('SENSING_TIME').getInfo()
                 imageGeometry = imageTarget.geometry() #Tile geometry.
             elif 'Landsat5' == satellite:
                 image = ee.Image("LANDSAT/LT05/C01/T1_SR/"+imageID)
-                imageTarget = image.divide(10000).set(image.toDictionary(image.propertyNames()))
+                def applyScaleFactors(img):
+                  opticalBands = img.select('SR_B.').multiply(0.0000275).add(-0.2)
+                  thermalBands = img.select('ST_B6').multiply(0.00341802).add(149.0)
+                  addBands = img.addBands(opticalBands, None, True).addBands(thermalBands, None, True)
+                  return addBands.set(img.toDictionary(img.propertyNames()))
+                imageTarget = applyScaleFactors(image)
                 imageSat = satellite
                 imageTile = str(imageTarget.get('WRS_PATH').getInfo())+str(imageTarget.get('WRS_ROW').getInfo()) #Image tile id
                 imageDate = imageTarget.get('SENSING_TIME').getInfo()
@@ -136,15 +151,15 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
         #     swir = 'B11'
         #     blue = 'B2'
         # elif 'Landsat8' in imageSat:
-        #     nir = 'B5'
-        #     green = 'B3'
-        #     swir = 'B6'
-        #     blue = 'B2'
+        #     nir = 'SR_B5'
+        #     green = 'SR_B3'
+        #     swir = 'SR_B6'
+        #     blue = 'SR_B2'
         # else:
-        #     nir = 'B4'
-        #     green = 'B2'
-        #     swir = 'B5'
-        #     blue = 'B1'
+        #     nir = 'SR_B4'
+        #     green = 'SR_B2'
+        #     swir = 'SR_B5'
+        #     blue = 'SR_B1'
         
         ## Apply tidal flat mask
         #ndwiMask = tidalMask(landMask,nir,green)
