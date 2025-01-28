@@ -84,7 +84,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
                 imageTarget = applyScaleFactors(image)
                 imageSat = satellite
                 imageTile = str(imageTarget.get('WRS_PATH').getInfo())+str(imageTarget.get('WRS_ROW').getInfo()) #Image tile id
-                imageDate = imageTarget.get('SENSING_TIME').getInfo()
+                imageDate = ee.Date(imageTarget.get('system:time_start')).format("YYYY-MM-dd").getInfo()
                 imageGeometry = imageTarget.geometry() #Tile geometry.
             elif 'Landsat7' == satellite:
                 image = ee.Image("LANDSAT/LE07/C02/T1_L2/"+imageID)
@@ -96,7 +96,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
                 imageTarget = applyScaleFactors(image)
                 imageSat = satellite
                 imageTile = str(imageTarget.get('WRS_PATH').getInfo())+str(imageTarget.get('WRS_ROW').getInfo()) #Image tile id
-                imageDate = imageTarget.get('SENSING_TIME').getInfo()
+                imageDate = ee.Date(imageTarget.get('system:time_start')).format("YYYY-MM-dd").getInfo()
                 imageGeometry = imageTarget.geometry() #Tile geometry.
             elif 'Landsat5' == satellite:
                 image = ee.Image("LANDSAT/LT05/C02/T1_L2/"+imageID)
@@ -108,7 +108,7 @@ def start_processing(imageSource,satellite,regionName,boaFolder,exportFolder,dat
                 imageTarget = applyScaleFactors(image)
                 imageSat = satellite
                 imageTile = str(imageTarget.get('WRS_PATH').getInfo())+str(imageTarget.get('WRS_ROW').getInfo()) #Image tile id
-                imageDate = imageTarget.get('SENSING_TIME').getInfo()
+                imageDate = ee.Date(imageTarget.get('system:time_start')).format("YYYY-MM-dd").getInfo()
                 imageGeometry = imageTarget.geometry() #Tile geometry.
 
         if 'Sentinel' in imageSat:
