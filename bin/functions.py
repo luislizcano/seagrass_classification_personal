@@ -356,7 +356,7 @@ def DII(image, scale, sand):
     DI_image = ee.Image()
     DI_image = DI_image.addBands(DII_1_2.select([0],['B1B2']))
     DI_image = DI_image.addBands(DII_1_3.select([0],['B1B3']))
-    DI_image = DI_image.addBands(DII_2_3.select([1],['B2B3']))
+    DI_image = DI_image.addBands(DII_2_3.select([0],['B2B3']))
     DII = DI_image.select('B1B2','B1B3','B2B3')
     
     return ee.Image(DII)
